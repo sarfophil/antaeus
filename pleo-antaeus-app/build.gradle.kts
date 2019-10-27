@@ -15,5 +15,8 @@ dependencies {
     implementation(project(":pleo-antaeus-data"))
     implementation(project(":pleo-antaeus-rest"))
     implementation(project(":pleo-antaeus-core"))
+    implementation(project(":pleo-antaeus-schedule"))
     compile(project(":pleo-antaeus-models"))
 }
+
+

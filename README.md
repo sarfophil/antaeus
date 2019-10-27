@@ -19,6 +19,29 @@ Please let us know how long the challenge takes you. We're not looking for how s
 Requirements:
 - \>= Java 11 environment
 
+###Solution
+The idea for this api is to build a schedule service which charge subscription every first date of every month. It starts in the `AntaeusApp.kt`.
+It invokes the `JobSchedulingService(billingService).schedule(nextDate)` in the `JobSchedulingService` class which triggers a
+job to run for the next date. When the job is fired `JobSchedule` in `pleo-antaeus-schedule` module.
+In the `billingService.processSubscription()`, I have added `processingStatus` field to `Invoice` which will be evaluating and updating invoice status.
+
+`CustomerNotFoundException:`, I'm handling the exception and updating  `processingStatus` to `ProcessingStatus.NOT_FOUND` and updating the invoice table.
+In future,we can store logs of these exceptions for decision making.
+`NetworkException:` I'm handling the exception and updating `processingStatus` to `ProcessingStatus.FAILED` and updating the invoice table.I'm storing failed invoices
+in a local instance variable `failedInvoiceList`. The `checkFailedInvoiceByProcessingStatus()` makes use of the `failedInvoiceList` to crosscheck invoices which failed in the `failedInvoiceList`
+and process it again by invoking the `retryInvoiceSubscriptionOperation()`. If there's still `NetworkException` we can send a log report to the admin.
+
+In the `JobSchedule`, when `performAsyncTask()` is completed, it invokes the `scheduleNextJob()`  for the next month. The `performAsyncTask()` has a default maximum retries of 5 which retries the `performAsyncTask`
+when `futureTask.isCancelled()` is invoked in the `FutureTask`.
+###Sequence Diagram
+![alt text](SequenceDiagram.png)
+
+###Starting up a custom service
+I have added an endpoint which starts a new subscription manually
+
+GET: ` /rest/v1/schedule?date={2019-10-26}&time={19:42:00}`
+
+
 ### Building
 
 ```
@@ -26,28 +49,13 @@ Requirements:
 ```
 
 ### Running
+Running through docker.
 
-There are 2 options for running Anteus. You either need libsqlite3 or docker. Docker is easier but requires some docker knowledge. We do recommend docker though.
-
-
-*Running through docker*
-
-Install docker for your platform
+Install docker compose on your computer.
 
 ```
-make docker-run
+docker-compose up --build -d
 ```
-
-*Running Natively*
-
-Native java with sqlite (requires libsqlite3):
-
-If you use homebrew on MacOS `brew install sqlite`.
-
-```
-./gradlew run
-```
-
 
 ### App Structure
 The code given is structured as follows. Feel free however to modify the structure to fit your needs.
@@ -64,6 +72,9 @@ The code given is structured as follows. Feel free however to modify the structu
 |
 ├── pleo-antaeus-models
 |       Definition of the "rest api" models used throughout the application.
+|
+├── pleo-antaeus-schedule
+|       Module for scheduling jobs. This is where jobs are executed with the support of Quartz Job Scheduler
 |
 ├── pleo-antaeus-rest
 |        Entry point for REST API. This is where the routes are defined.

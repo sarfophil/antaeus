@@ -8,15 +8,25 @@ import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
+import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.schedule.service.JobSchedulingService
 import mu.KotlinLogging
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 private val logger = KotlinLogging.logger {}
 
-class AntaeusRest (
-    private val invoiceService: InvoiceService,
-    private val customerService: CustomerService
+class AntaeusRest(
+        private val invoiceService: InvoiceService,
+        private val customerService: CustomerService,
+        private val billingService: BillingService
 ) : Runnable {
 
     override fun run() {
@@ -74,7 +84,31 @@ class AntaeusRest (
                            it.json(customerService.fetch(it.pathParam("id").toInt()))
                        }
                    }
+
+                   path("schedule"){
+                       // URL: /rest/v1/schedule?date=param&time=param
+                       get{
+                           try {
+                               //Formats date and time parameters
+                             //  var formatter = DateTimeFormatter.ISO_INSTANT;
+                               val dateTimeParam = Stream.of(it.req.getParameter("date"),it.req.getParameter("time"))
+                                       .collect(Collectors.joining("T"));
+                               logger.info("Date time param- ${dateTimeParam}")
+                               var dateTime = LocalDateTime.parse(dateTimeParam)
+                               var zoneDateTime = ZonedDateTime.of(dateTime, ZoneId.systemDefault())
+
+                               //Schedule an appropriate time
+                               var messageJobService = JobSchedulingService(billingService).schedule(zoneDateTime);
+
+                               it.json("Accepted")
+                           }catch (ex: DateTimeParseException){
+                               logger.info("Invalid date format ${ex}");
+                               it.json("Invalid Date Format")
+                           }
+                       }
+                   }
                }
+
            }
         }
     }

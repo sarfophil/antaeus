@@ -7,15 +7,8 @@
 
 package io.pleo.antaeus.data
 
-import io.pleo.antaeus.models.Currency
-import io.pleo.antaeus.models.Customer
-import io.pleo.antaeus.models.Invoice
-import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
+import io.pleo.antaeus.models.*
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class AntaeusDal(private val db: Database) {
@@ -47,6 +40,7 @@ class AntaeusDal(private val db: Database) {
                     it[this.currency] = amount.currency.toString()
                     it[this.status] = status.toString()
                     it[this.customerId] = customer.id
+                    it[this.processingStatus] = ProcessingStatus.DEFAULT.toString()
                 } get InvoiceTable.id
         }
 
@@ -79,5 +73,18 @@ class AntaeusDal(private val db: Database) {
         }
 
         return fetchCustomer(id!!)
+    }
+
+    fun updateInvoice(invoice: Invoice){
+        transaction(db){
+            InvoiceTable.update({InvoiceTable.id eq invoice.id}) {
+                it[this.id] = invoice.id
+                it[this.currency] = invoice.amount.currency.toString()
+                it[this.customerId] = invoice.customerId
+                it[this.value] = invoice.amount.value
+                it[this.status] = invoice.status.toString()
+                it[this.processingStatus] = invoice.processingStatus.toString()
+            }
+        }
     }
 }

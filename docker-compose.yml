@@ -1,0 +1,27 @@
+version: '3.3'
+
+services:
+  antaeus:
+    image: pleo-antaeus
+    build: .
+    environment:
+      - GRADLE_OPTS="-Dorg.quartz.properties=quartz.properties"
+    volumes:
+      - pleo-antaeus-build-cache:/root/.gradle
+    ports:
+      - "7000:7000"
+    depends_on:
+      - mysql_db
+  mysql_db:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: antaeus_db
+      MYSQL_USER: antaeus
+      MYSQL_PASSWORD: antaeus
+      MYSQL_ROOT_PASSWORD: antaeus
+    volumes:
+      - ./docker/mysql/create.sql:/docker-entrypoint-initdb.d/create.sql
+volumes:
+  pleo-antaeus-build-cache:
