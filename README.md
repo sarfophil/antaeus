@@ -19,7 +19,7 @@ Please let us know how long the challenge takes you. We're not looking for how s
 Requirements:
 - \>= Java 11 environment
 
-###Solution
+## Solution
 The idea for this api is to build a schedule service which charge subscription every first date of every month. It starts in the `AntaeusApp.kt`.
 It invokes the `JobSchedulingService(billingService).schedule(nextDate)` in the `JobSchedulingService` class which triggers a
 job to run for the next date. When the job is fired `JobSchedule` in `pleo-antaeus-schedule` module.
