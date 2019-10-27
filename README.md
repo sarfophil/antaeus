@@ -33,20 +33,15 @@ and process it again by invoking the `retryInvoiceSubscriptionOperation()`. If t
 
 In the `JobSchedule`, when `performAsyncTask()` is completed, it invokes the `scheduleNextJob()`  for the next month. The `performAsyncTask()` has a default maximum retries of 5 which retries the `performAsyncTask`
 when `futureTask.isCancelled()` is invoked in the `FutureTask`.
-###Sequence Diagram
+
+##Sequence Diagram
 ![alt text](SequenceDiagram.png)
 
-###Starting up a custom service
+##Starting up a custom service
 I have added an endpoint which starts a new subscription manually
 
 GET: ` /rest/v1/schedule?date={2019-10-26}&time={19:42:00}`
 
-
-### Building
-
-```
-./gradlew build
-```
 
 ### Running
 Running through docker.
